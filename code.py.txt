@@ -1,0 +1,179 @@
+#Importing Essentials
+import numpy as np  #data frame manipulation
+import matplotlib.pyplot as plt 
+import os
+import pandas as pd #matrix compuation
+from sklearn import metrics 
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.svm import LinearSVC
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.linear_model import LogisticRegression
+
+path = '/opinions.tsv'      //dataset file
+data = pd.read_table(path,header=None,skiprows=1,names=['Sentiment','Review'])
+X = data.Review
+y = data.Sentiment
+#Using CountVectorizer to convert text into tokens/features
+vect = CountVectorizer(stop_words='english', ngram_range = (1,1), max_df = .80, min_df = 4)
+X_train, X_test, y_train, y_test = train_test_split(X,y,random_state=1, test_size= 0.2)    #spliting data into train and test data
+#Using training data to transform text into counts of features for each message
+vect.fit(X_train)                       #Scale the training data
+X_train_dtm = vect.transform(X_train)                   
+X_test_dtm = vect.transform(X_test)
+accuracy=[0,0,0,0]
+positive=[0,0,0,0]
+ 
+#Accuracy using Naive Bayes Model
+NB = MultinomialNB()
+NB.fit(X_train_dtm, y_train)
+y_pred = NB.predict(X_test_dtm)
+print('\nNaive Bayes')
+print('Accuracy Score: ',metrics.accuracy_score(y_test,y_pred)*100,'%',sep='')
+accuracy[0]=metrics.accuracy_score(y_test,y_pred)*100
+print('Confusion Matrix: ',metrics.confusion_matrix(y_test,y_pred), sep = '\n')
+M=metrics.confusion_matrix(y_test,y_pred)
+NBP=(M[1][1]/(M[0][1]+M[1][1]))*100
+ 
+#Accuracy using Logistic Regression Model
+LR = LogisticRegression()
+LR.fit(X_train_dtm, y_train)
+y_pred = LR.predict(X_test_dtm)
+print('\nLogistic Regression')
+print('Accuracy Score: ',metrics.accuracy_score(y_test,y_pred)*100,'%',sep='')
+accuracy[1]=metrics.accuracy_score(y_test,y_pred)*100
+print('Confusion Matrix: ',metrics.confusion_matrix(y_test,y_pred), sep = '\n')
+M=metrics.confusion_matrix(y_test,y_pred)
+LRP=(M[1][1]/(M[0][1]+M[1][1]))*100
+ 
+#Accuracy using SVM Model
+SVM = LinearSVC()
+SVM.fit(X_train_dtm, y_train)
+y_pred = SVM.predict(X_test_dtm)
+print('\nSupport Vector Machine')
+print('Accuracy Score: ',metrics.accuracy_score(y_test,y_pred)*100,'%',sep='')
+accuracy[2]=metrics.accuracy_score(y_test,y_pred)*100
+print('Confusion Matrix: ',metrics.confusion_matrix(y_test,y_pred), sep = '\n')
+M=metrics.confusion_matrix(y_test,y_pred)
+SVMP=(M[1][1]/(M[0][1]+M[1][1]))*100
+
+#Graphs
+X = ['Naive Bayes','Logisitic Regression','Support Vector Machine',' ']
+positive=[NBP,LRP,SVMP,0]
+array=["accuracy","Positive"]
+X_axis = np.arange(len(X))
+plt.bar(X_axis - 0.2, accuracy, 0.2, label = 'Accuracy')
+#plt.bar(X_axis + 0.2, positive, 0.2, label = 'Positive percentage') 
+plt.xticks(X_axis, X,rotation=45)
+plt.xlabel("Models")
+plt.ylabel("Accuracy (in %)")
+plt.title("Comparision")
+i=0
+j=0
+for i in range(len(X)):
+    plt.annotate(round(accuracy[i],2), (-0.25 + i, accuracy[i] + j))
+    #plt.annotate(round(positive[i],2), (+0.25 + i, positive[i] + j))
+plt.show()
+
+print("------------------------------------------------------------------------------------")
+
+#Naive Bayes Analysis
+tokens_words = vect.get_feature_names()
+print('\nAnalysis')
+print('No. of tokens: ',len(tokens_words))
+counts = NB.feature_count_
+df_table = {'Token':tokens_words,'Negative': counts[0,:],'Positive': counts[1,:]}
+tokens = pd.DataFrame(df_table, columns= ['Token','Positive','Negative'])
+positives = len(tokens[tokens['Positive']>tokens['Negative']])
+print('No. of positive tokens: ',positives)
+print('No. of negative tokens: ',len(tokens_words)-positives)
+
+#Check positivity/negativity of specific tokens
+token_search = ['awesome']
+print('\nSearch Results for token/s:',token_search)
+print(tokens.loc[tokens['Token'].isin(token_search)])
+
+print("------------------------------------------------------------------------------------")
+ 
+#Custom Test: Test a review on the best performing model (Logistic Regression)
+trainingVector = CountVectorizer(stop_words='english', ngram_range = (1,1), max_df = .80, min_df = 5)
+X = data.Review
+trainingVector.fit(X)
+X_dtm = trainingVector.transform(X)
+LR_complete = LogisticRegression()
+LR_complete.fit(X_dtm, y)
+#Input Review
+print('\nTest a custom review message')
+print('Enter review to be analysed: ', end=" ")
+test = []
+test.append(input())
+test_dtm = trainingVector.transform(test)
+predLabel = LR_complete.predict(test_dtm)
+tags = ['Negative','Positive']
+#Display Output
+print('The review is predicted',tags[predLabel[0]])
+ABC=0
+ 
+
+#Testing for various reviews 
+l=[0,0,0,0,0,0]
+positivity=[0,0,0,0,0,0]
+I=[0,0,0,0,0,0]
+X=[0,0,0,0,0,0]
+for i in range(0,4):
+  path = '/opinions.tsv'
+  data = pd.read_table(path,header=None,skiprows=1,names=['Sentiment','Review'])
+  X = data.Review
+  y = data.Sentiment
+  #Using CountVectorizer to convert text into tokens/features
+  vect = CountVectorizer(stop_words='english', ngram_range = (1,1), max_df = .80, min_df = 4)
+  X_train, X_test, y_train, y_test = train_test_split(X,y,random_state=1, test_size= 0.2)
+  #Using training data to transform text into counts of features for each message
+  vect.fit(X_train)
+  X_train_dtm = vect.transform(X_train) 
+  X_test_dtm = vect.transform(X_test)
+  trainingVector = CountVectorizer(stop_words='english', ngram_range = (1,1), max_df = .80, min_df = 5)
+  trainingVector.fit(X)
+  X_dtm = trainingVector.transform(X)
+  LR_complete = LogisticRegression()
+  LR_complete.fit(X_dtm, y)
+  #Input Review
+  print('\nTest a custom review message')
+  print('Enter review to be analysed: ', end=" ")
+  test = []
+  test.append(input())
+  test_dtm = trainingVector.transform(test)
+  predLabel = LR_complete.predict(test_dtm)
+  tags = ['Negative','Positive']
+  print('The review is predicted',tags[predLabel[0]])
+  LR = LogisticRegression()
+  LR.fit(X_train_dtm, y_train)
+  y_pred = LR.predict(X_test_dtm)
+  print('\nLogistic Regression')
+  print('Accuracy Score: ',metrics.accuracy_score(y_test,y_pred)*100,'%',sep='')
+  accuracy[1]=metrics.accuracy_score(y_test,y_pred)*100
+  print('Confusion Matrix: ',metrics.confusion_matrix(y_test,y_pred), sep = '\n')
+  np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+  M=metrics.confusion_matrix(y_test,y_pred)
+  LRP=(M[1][1]/(M[0][1]+M[1][1]))*100
+  l[i]=metrics.accuracy_score(y_test,y_pred)*100
+  positivity[i]=LRP
+  I[i]=predLabel*100
+ 
+X=['Phrase-1','Phrase-2','Phrase-3','Phrase-4',' ',' ']
+array=["impression"]
+X_axis = np.arange(len(X))
+plt.bar(X_axis + 0.4, I, 0.2, label = 'Impression')
+plt.xticks(X_axis, X,rotation=45)
+plt.xlabel("Phrases")
+plt.ylabel("Percentage")
+plt.title("Comparision")
+plt.legend(array)
+i=0
+j=0
+for i in range(len(X)):
+    #plt.annotate(round(I[i],1), (-0.1 + i, I[i] + j))
+    #plt.annotate(round(positivity[i],1), (-0.1 + i, positivity[i] + j))
+    plt.annotate(I[i], (+0.35 + i, I[i] + j))
+plt.show()
+plt.show()
